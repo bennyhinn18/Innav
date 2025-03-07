@@ -34,12 +34,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         tools:targetApi="31">
+
         <meta-data
             android:name="com.google.ar.core"
             android:value="required" />
 
         <activity
             android:name="com.example.innav.MainActivity"
+
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

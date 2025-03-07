@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -50,6 +52,9 @@ dependencies {
     implementation("com.google.ar.sceneform.ux:sceneform-ux:1.17.1") {
         exclude(group = "com.android.support", module = "support-compat")
     }
+    implementation(libs.firebase.firestore.ktx)
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-analytics")
 
     // Testing
     testImplementation(libs.junit)
