@@ -1,30 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="20dp"
-    android:background="@android:color/white">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnMarkLocations"
-        android:layout_width="match_parent"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPathMode"
+        android:text="Path Mode"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Mark Locations (AR)"
-        android:textSize="18sp"
-        android:padding="12dp"
-        android:backgroundTint="@android:color/holo_blue_dark"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="20dp"/>
+        android:layout_margin="16dp"/>
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLandmarkMode"
+        android:text="Landmark Mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"/>
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNavigate"
-        android:layout_width="match_parent"
+        android:text="Navigate"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Navigation"
-        android:textSize="18sp"
-        android:padding="12dp"
-        android:backgroundTint="@android:color/holo_green_dark"
-        android:textColor="@android:color/white"/>
+        android:layout_margin="16dp"/>
 </LinearLayout>

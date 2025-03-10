@@ -44,7 +44,7 @@ dependencies {
 
     // Google AR Core
     implementation("com.google.ar:core:1.40.0")
-
+    implementation("com.google.android.material:material:1.11.0")
     // Sceneform
     implementation("com.google.ar.sceneform:core:1.17.1") {
         exclude(group = "com.android.support", module = "support-compat")
@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation(libs.firebase.database.ktx)
 
     // Testing
     testImplementation(libs.junit)

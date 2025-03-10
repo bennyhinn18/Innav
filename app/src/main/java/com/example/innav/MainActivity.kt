@@ -1,10 +1,10 @@
 package com.example.innav
-
+import com.example.innav.ARNavigationActivity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import android.widget.Button
-
+import com.google.android.material.button.MaterialButton
 
 class MainActivity : AppCompatActivity() {
 
@@ -12,18 +12,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Button to go to Mark Locations Page
-        val btnMarkLocations = findViewById<Button>(R.id.btnMarkLocations)
-        btnMarkLocations.setOnClickListener {
-            val intent = Intent(this, MarkLocationsActivity::class.java)
-            startActivity(intent)
-        }
+        val btnPathMode: MaterialButton = findViewById(R.id.btnPathMode)
+        val btnLandmarkMode: MaterialButton = findViewById(R.id.btnLandmarkMode)
+        val btnNavigate: MaterialButton = findViewById(R.id.btnNavigate)
 
-        // Button to go to Navigation Page
-        val btnNavigate = findViewById<Button>(R.id.btnNavigate)
-        btnNavigate.setOnClickListener {
-            val intent = Intent(this, NavigationActivity::class.java)
-            startActivity(intent)
+        btnPathMode.setOnClickListener { safeStartActivity(PathCollectionActivity::class.java) }
+        btnLandmarkMode.setOnClickListener { safeStartActivity(LandmarkCollectionActivity::class.java) }
+        btnNavigate.setOnClickListener { safeStartActivity(ARNavigationActivity::class.java) }
+    }
+
+    private fun safeStartActivity(activityClass: Class<*>) {
+        try {
+            startActivity(Intent(this, activityClass))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error: Unable to start activity", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
         }
     }
 }
