@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104211388855",
+    "project_id": "innav-feb87",
+    "storage_bucket": "innav-feb87.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104211388855:android:ffa2d7f0ba8f7e0eb6f032",
+        "android_client_info": {
+          "package_name": "com.example.innav"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_FGz1ZOU6iyyrExdVoqYjLA4XKwwcMW0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
