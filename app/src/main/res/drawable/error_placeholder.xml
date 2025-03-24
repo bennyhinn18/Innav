@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFCDD2" /> <!-- Light red background -->
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+    <item>
+        <bitmap
+            android:src="@android:drawable/ic_dialog_alert"
+            android:gravity="center" />
+    </item>
+</layer-list>

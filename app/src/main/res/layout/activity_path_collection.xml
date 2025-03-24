@@ -1,24 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
 
-    <EditText
-        android:id="@+id/pathNameInput"
-        android:hint="Enter path name"
+    <TextView
+        android:id="@+id/tvRecordingStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ready to record"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStartRecording"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:id="@+id/startButton"
+        android:layout_height="wrap_content"
         android:text="Start Recording"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        app:icon="@drawable/ic_record"
+        android:layout_marginTop="16dp"/>
 
-    <Button
-        android:id="@+id/stopButton"
-        android:text="Stop and Save"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStopRecording"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="Stop Recording"
+        app:icon="@drawable/ic_stop"
+        android:layout_marginTop="8dp"
+        android:enabled="false"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Collected Data Points:"
+        android:textSize="16sp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDataPoints"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"/>
+
 </LinearLayout>

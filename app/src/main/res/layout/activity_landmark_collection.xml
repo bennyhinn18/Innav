@@ -1,20 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <EditText
-        android:id="@+id/landmarkNameInput"
+    <com.ortiz.touchview.TouchImageView
+        android:id="@+id/floorPlanView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter landmark name" />
+        android:layout_height="400dp"
+        android:src="@drawable/floor_plan"
+        />
 
-    <Button
-        android:id="@+id/saveLandmarkButton"
+    <TextView
+        android:id="@+id/tvGridCoordinates"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Grid: (0, 0)"
+        android:textSize="16sp"/>
+
+    <TextView
+        android:id="@+id/tvMagneticData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Magnetic: X: 0.00, Y: 0.00, Z: 0.00"
+        android:textSize="14sp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Landmark" />
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etLandmarkName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Landmark Name"/>
+    </com.google.android.material.textfield.TextInputLayout>
+    <!-- <com.google.android.material.button.MaterialButton
+        android:id="@+id/addLandmarkButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Add Landmark"/> -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSaveLandmark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Save Landmark"/>
 
 </LinearLayout>

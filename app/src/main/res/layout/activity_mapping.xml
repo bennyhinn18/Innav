@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- WebView for SVG Map -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Controls -->
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Current Reading"
+        android:enabled="false" />
+
+    <TextView
+        android:id="@+id/tvGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selected Grid: None" />
+
+    <TextView
+        android:id="@+id/tvMagnetic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Magnetic: X=0.00, Y=0.00, Z=0.00" />
+
+    <Button
+        android:id="@+id/btnExport"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Export Data" />
+
+</LinearLayout>

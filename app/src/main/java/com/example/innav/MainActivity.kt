@@ -1,5 +1,5 @@
 package com.example.innav
-import com.example.innav.ARNavigationActivity
+
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -14,11 +14,13 @@ class MainActivity : AppCompatActivity() {
 
         val btnPathMode: MaterialButton = findViewById(R.id.btnPathMode)
         val btnLandmarkMode: MaterialButton = findViewById(R.id.btnLandmarkMode)
-        val btnNavigate: MaterialButton = findViewById(R.id.btnNavigate)
+        val btnARNavigate: MaterialButton = findViewById(R.id.btnARNavigate)
+        val btnNavigate:MaterialButton = findViewById(R.id.btnNavigate)
 
         btnPathMode.setOnClickListener { safeStartActivity(PathCollectionActivity::class.java) }
         btnLandmarkMode.setOnClickListener { safeStartActivity(LandmarkCollectionActivity::class.java) }
-        btnNavigate.setOnClickListener { safeStartActivity(ARNavigationActivity::class.java) }
+        btnARNavigate.setOnClickListener { safeStartActivity(ARNavigationActivity::class.java) }
+        btnNavigate.setOnClickListener { safeStartActivity(NavigationActivity::class.java) }
     }
 
     private fun safeStartActivity(activityClass: Class<*>) {

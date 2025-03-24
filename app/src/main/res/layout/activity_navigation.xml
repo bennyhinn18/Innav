@@ -1,27 +1,47 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
 
-    <EditText
-        android:id="@+id/searchInput"
-        android:hint="Search for a landmark..."
+    <!-- Landmark Spinner -->
+    <Spinner
+        android:id="@+id/landmarkSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"/>
+        android:prompt="@string/select_landmark" />
 
+    <!-- Compass Arrow -->
+    <ImageView
+        android:id="@+id/compassArrow"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/ic_arrow" />
+
+    <!-- Distance Text -->
+    <TextView
+        android:id="@+id/distanceText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:text="Distance: 0m"
+        android:textSize="18sp" />
+
+    <!-- Start Navigation Button -->
     <Button
-        android:id="@+id/btnStartNavigation"
-        android:text="Start Navigation"
+        android:id="@+id/startNavigationButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
-
-    <com.google.ar.sceneform.ux.ArFragment
-        android:id="@+id/ar_fragment"
+        android:layout_marginTop="32dp"
+        android:text="Start Navigation" />
+<!-- AR Fragment -->
+    <fragment
+        android:id="@+id/arFragment"
+        android:name="com.google.ar.sceneform.ux.ArFragment"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_height="match_parent" />
 </LinearLayout>
