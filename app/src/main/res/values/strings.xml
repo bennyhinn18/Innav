@@ -1,6 +1,9 @@
 <resources>
-    <string name="app_name">Innav</string>
-    <string name="select_landmark">Select a landmark</string>
+
+
     <string name="landmark_prompt">Select a landmark</string>
     <string name="add_landmark">Add Landmark</string>
+    <string name="app_name">Indoor Navigation</string>
+    <string name="select_landmark">Select Destination</string>
+    <string name="current_position">Current Position:</string>
 </resources>

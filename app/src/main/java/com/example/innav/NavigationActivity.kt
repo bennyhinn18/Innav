@@ -1,360 +1,193 @@
 package com.example.innav
 
-import android.Manifest
-import android.content.pm.PackageManager
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.Spinner
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import com.google.ar.core.Anchor
-import com.google.ar.core.Pose
-import com.google.ar.sceneform.AnchorNode
-import com.google.ar.sceneform.Node
-import com.google.ar.sceneform.math.Quaternion
-import com.google.ar.sceneform.math.Vector3
-import com.google.ar.sceneform.rendering.ModelRenderable
-import com.google.ar.sceneform.ux.ArFragment
-import com.google.ar.sceneform.ux.TransformableNode
-import com.google.firebase.firestore.FirebaseFirestore
-import java.util.*
-import kotlin.math.*
+import com.example.innav.databinding.ActivityNavigationBinding
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.ortiz.touchview.TouchImageView
+import kotlin.math.sqrt
 
-class NavigationActivity : AppCompatActivity(), LocationListener, SensorEventListener {
+class NavigationActivity : AppCompatActivity(), SensorEventListener {
 
-    // UI Components
-    private lateinit var landmarkSpinner: Spinner
-    private lateinit var distanceText: TextView
-    private lateinit var startNavigationButton: Button
-
-    // AR Components
-    private lateinit var arFragment: ArFragment
-    private var arrowRenderable: ModelRenderable? = null
-
-    // Data
-    private lateinit var landmarks: List<Landmark>
-    private lateinit var paths: List<Path>
-    private lateinit var selectedPath: Path
-
-    // Sensors
-    private lateinit var locationManager: LocationManager
+    private lateinit var binding: ActivityNavigationBinding
     private lateinit var sensorManager: SensorManager
-    private var magnetometer: Sensor? = null
-    private var currentLocation: Location? = null
-    private var currentMagneticData: FloatArray? = null
+    private lateinit var particleFilter: ParticleFilter
+    private lateinit var currentPath: List<Pair<Int, Int>>
+    private var landmarks = mutableListOf<Landmark>()
+    private var selectedLandmark: Landmark? = null
+
+    // Visualization parameters
+    private val gridSizePx = 100 // 100 pixels per grid cell
+    private val positionRadius = 20f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_navigation)
+        binding = ActivityNavigationBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Initialize UI
-        landmarkSpinner = findViewById(R.id.landmarkSpinner)
-        distanceText = findViewById(R.id.distanceText)
-        startNavigationButton = findViewById(R.id.startNavigationButton)
+        setupSensors()
+        setupFloorPlan()
+        setupLandmarkSelector()
+        initializeNavigationSystem()
+    }
 
-        // Initialize AR Fragment
-        arFragment = supportFragmentManager.findFragmentById(R.id.arFragment) as ArFragment
-
-        // Initialize sensors
-        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+    private fun setupSensors() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-
-        // Request Location Permissions
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
-            )
-        }
-
-        // Start Location Updates
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                1000L,
-                1f,
-                this
-            )
-        }
-
-        // Start Magnetometer Data Collection
-        magnetometer?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-        }
-
-        // Fetch landmarks and paths from Firebase
-        fetchLandmarks()
-        fetchPaths()
-
-        // Set up navigation button
-        startNavigationButton.setOnClickListener {
-            val selectedLandmarkId = landmarks[landmarkSpinner.selectedItemPosition].id
-            Log.d("NavigationActivity", "Selected Landmark ID: $selectedLandmarkId")
-
-            if (selectedLandmarkId.isNotEmpty()) {
-                // Find the path for the selected landmark
-                selectedPath = paths.find { it.name == selectedLandmarkId } ?: return@setOnClickListener
-                startNavigation()
-            } else {
-                Toast.makeText(this, "Please select a landmark first!", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun fetchLandmarks() {
-        FirebaseFirestore.getInstance().collection("landmarks")
-            .get()
-            .addOnSuccessListener { documents ->
-                landmarks = documents.map { document ->
-                    Landmark(
-                        id = document.id,
-                        name = document.getString("name") ?: "",
-                        latitude = document.getDouble("latitude") ?: 0.0,
-                        longitude = document.getDouble("longitude") ?: 0.0,
-                        altitude = document.getDouble("altitude") ?: 0.0
-                    )
-                }
-                // Populate the spinner with landmark names
-                val landmarkNames = landmarks.map { it.name }
-                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, landmarkNames)
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                landmarkSpinner.adapter = adapter
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to fetch landmarks: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun fetchPaths() {
-        FirebaseFirestore.getInstance().collection("paths")
-            .get()
-            .addOnSuccessListener { documents ->
-                paths = documents.map { document ->
-                    val points = (document.get("data") as List<Map<String, Any>>).map { point ->
-                        PathPoint(
-                            latitude = point["latitude"] as Double,
-                            longitude = point["longitude"] as Double,
-                            altitude = point["altitude"] as Double,
-                            magnetic_x = point["magnetic_x"] as? Float ?: 0f,
-                            magnetic_y = point["magnetic_y"] as? Float ?: 0f,
-                            magnetic_z = point["magnetic_z"] as? Float ?: 0f,
-                            timestamp = point["timestamp"] as Long
-                        )
-                    }
-                    Path(
-                        id = document.id,
-                        name = document.getString("name") ?: "",
-                        points = points
-                    )
-                }
-                Log.d("NavigationActivity", "Fetched ${paths.size} paths")
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to fetch paths: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun startNavigation() {
-        // Load the arrow model
-        loadArrowModel { arrowRenderable ->
-            this.arrowRenderable = arrowRenderable
-            // Place arrows along the path
-            placeArrows(selectedPath, arrowRenderable)
-        }
-
-        // Start a timer to update navigation every 2 seconds
-        val timer = Timer()
-        timer.scheduleAtFixedRate(object : TimerTask() {
-            override fun run() {
-                runOnUiThread {
-                    updateNavigation()
-                }
-            }
-        }, 0, 2000)
-    }
-
-    private fun loadArrowModel(onSuccess: (ModelRenderable) -> Unit) {
-        ModelRenderable.builder()
-            .setSource(this, Uri.parse("arrow.glb")) // Ensure the model is in assets
-            .build()
-            .thenAccept(onSuccess)
-            .exceptionally { throwable ->
-                Toast.makeText(this, "Failed to load AR model: ${throwable.message}", Toast.LENGTH_SHORT).show()
-                null
-            }
-    }
-
-    private fun placeArrows(path: Path, arrowRenderable: ModelRenderable) {
-        val scene = arFragment.arSceneView.scene
-
-        for (point in path.points) {
-            // Create an anchor at the path point
-            val anchor = arFragment.arSceneView.session?.createAnchor(
-                Pose.makeTranslation(
-                    point.latitude.toFloat(),
-                    point.altitude.toFloat(),
-                    point.longitude.toFloat()
-                )
-            ) ?: continue
-
-            // Create an AnchorNode
-            val anchorNode = AnchorNode(anchor)
-            anchorNode.setParent(scene)
-
-            // Create a TransformableNode for the arrow
-            val arrowNode = TransformableNode(arFragment.transformationSystem)
-            arrowNode.renderable = arrowRenderable
-            arrowNode.setParent(anchorNode)
-
-            // Position the arrow
-            arrowNode.localPosition = Vector3(0f, 0f, -1f) // Adjust as needed
-            arrowNode.localRotation = Quaternion.axisAngle(Vector3(0f, 1f, 0f), 90f) // Rotate to face the correct direction
-        }
-    }
-
-    private fun updateNavigation() {
-        if (currentLocation == null || currentMagneticData == null) {
-            Toast.makeText(this, "Waiting for sensor data...", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Find the closest point in the selected path
-        val closestPoint = findClosestPathPoint(
-            currentLocation!!.latitude,
-            currentLocation!!.longitude,
-            currentLocation!!.altitude,
-            currentMagneticData!![0],
-            currentMagneticData!![1],
-            currentMagneticData!![2],
-            selectedPath
+        sensorManager.registerListener(
+            this,
+            sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+            SensorManager.SENSOR_DELAY_GAME
         )
-
-        if (closestPoint != null) {
-            // Update distance display
-            val distance = haversine(
-                currentLocation!!.latitude,
-                currentLocation!!.longitude,
-                closestPoint.latitude,
-                closestPoint.longitude
-            )
-            distanceText.text = "Distance: ${"%.1f".format(distance)}m"
-        } else {
-            Toast.makeText(this, "No matching point found!", Toast.LENGTH_SHORT).show()
-        }
     }
 
-    private fun findClosestPathPoint(
-        currentLat: Double,
-        currentLon: Double,
-        currentAlt: Double,
-        currentMagX: Float,
-        currentMagY: Float,
-        currentMagZ: Float,
-        path: Path
-    ): PathPoint? {
-        var minDistance = Double.MAX_VALUE
-        var closestPoint: PathPoint? = null
+    private fun setupFloorPlan() {
+        binding.floorPlanView.setImageResource(R.drawable.floor_plan)
+        binding.floorPlanContainer.addView(NavigationOverlayView(this))
+    }
 
-        for (point in path.points) {
-            // Weighted distance calculation
-            val latDiff = (currentLat - point.latitude) * 1000000
-            val lonDiff = (currentLon - point.longitude) * 1000000
-            val altDiff = (currentAlt - point.altitude)
-            val magXDiff = (currentMagX - point.magnetic_x).toDouble()
-            val magYDiff = (currentMagY - point.magnetic_y).toDouble()
-            val magZDiff = (currentMagZ - point.magnetic_z).toDouble()
 
-            val distance = sqrt(
-                latDiff.pow(2) + lonDiff.pow(2) + altDiff.pow(2) +
-                        magXDiff.pow(2) + magYDiff.pow(2) + magZDiff.pow(2)
-            )
+    private fun setupLandmarkSelector() {
+        FirebaseDatabase.getInstance().getReference("landmarks")
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    landmarks = snapshot.children.mapNotNull { it.getValue(Landmark::class.java) }.toMutableList()
+                    binding.spinnerLandmarks.adapter = ArrayAdapter(
+                        this@NavigationActivity,
+                        android.R.layout.simple_spinner_dropdown_item,
+                        landmarks.map { it.name }
+                    )
+                }
 
-            if (distance < minDistance) {
-                minDistance = distance
-                closestPoint = point
+                override fun onCancelled(error: DatabaseError) {
+                    Toast.makeText(this@NavigationActivity, "Failed to load landmarks", Toast.LENGTH_SHORT).show()
+                }
+            })
+
+        binding.spinnerLandmarks.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedLandmark = landmarks[position]
+                updateNavigationPath()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                selectedLandmark = null
             }
         }
-
-        return closestPoint
     }
 
-    private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371 // Earth's radius in kilometers
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
+    private fun initializeNavigationSystem() {
+        particleFilter = ParticleFilter(1000).apply {
+            loadMagneticMapFromFirebase()
+            initialize()
+        }
     }
 
-    override fun onLocationChanged(location: Location) {
-        currentLocation = location
-        Log.d("NavigationActivity", "Current Location: ${location.latitude}, ${location.longitude}")
+    private fun updateNavigationPath() {
+        selectedLandmark?.let { landmark ->
+            val currentPosition = particleFilter.currentEstimate()
+            currentPath = PathFinder.findPath(currentPosition, landmark.gridPosition)
+            binding.floorPlanContainer.getChildAt(0).invalidate()
+        }
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_MAGNETIC_FIELD) {
-            currentMagneticData = event.values.copyOf()
+        event?.takeIf { it.sensor.type == Sensor.TYPE_MAGNETIC_FIELD }?.let {
+            val magneticData = MagneticData(it.values[0], it.values[1], it.values[2])
+            particleFilter.update(magneticData)
+            updatePositionDisplay()
         }
+    }
+
+    private fun updatePositionDisplay() {
+        binding.floorPlanContainer.getChildAt(0).invalidate()
+        updateNavigationPath()
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    override fun onDestroy() {
-        super.onDestroy()
-        locationManager.removeUpdates(this)
-        sensorManager.unregisterListener(this)
+    inner class NavigationOverlayView(context: Context) : View(context) {
+        private val gridPaint = Paint().apply {
+            color = Color.GRAY
+            strokeWidth = 1f
+        }
+
+        private val pathPaint = Paint().apply {
+            color = Color.BLUE
+            strokeWidth = 8f
+            style = Paint.Style.STROKE
+        }
+
+        private val positionPaint = Paint().apply {
+            color = Color.RED
+            style = Paint.Style.FILL
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+            drawGrid(canvas)
+            drawCurrentPosition(canvas)
+            drawNavigationPath(canvas)
+        }
+
+        private fun drawGrid(canvas: Canvas) {
+            val width = width.toFloat()
+            val height = height.toFloat()
+
+            // Vertical lines
+            var x = 0f
+            while (x < width) {
+                canvas.drawLine(x, 0f, x, height, gridPaint)
+                x += gridSizePx
+            }
+
+            // Horizontal lines
+            var y = 0f
+            while (y < height) {
+                canvas.drawLine(0f, y, width, y, gridPaint)
+                y += gridSizePx
+            }
+        }
+
+        private fun drawCurrentPosition(canvas: Canvas) {
+            val (gridX, gridY) = particleFilter.currentEstimate()
+            val posX = gridX * gridSizePx + gridSizePx / 2f
+            val posY = gridY * gridSizePx + gridSizePx / 2f
+            canvas.drawCircle(posX, posY, positionRadius, positionPaint)
+        }
+
+        private fun drawNavigationPath(canvas: Canvas) {
+            if (currentPath.isEmpty()) return
+
+            val path = Path().apply {
+                val first = currentPath.first()
+                moveTo(
+                    first.first * gridSizePx + gridSizePx / 2f, // Convert to Float
+                    first.second * gridSizePx + gridSizePx / 2f  // Convert to Float
+                )
+                currentPath.drop(1).forEach { (x, y) ->
+                    lineTo(
+                        x * gridSizePx + gridSizePx / 2f, // Convert to Float
+                        y * gridSizePx + gridSizePx / 2f  // Convert to Float
+                    )
+                }
+            }
+            canvas.drawPath(path, pathPaint)
+        }
     }
 }
-data class Landmark(
-    val id: String = "", // Firestore document ID
-    val name: String = "",
-    val latitude: Double = 0.0,
-    val longitude: Double = 0.0,
-    val altitude: Double = 0.0,
-    val magnetic_x: Float = 0f,
-    val magnetic_y: Float = 0f,
-    val magnetic_z: Float = 0f,
-    val timestamp: Long = 0
-)
-data class Path(
-    val id: String = "",
-    val name: String = "",
-    val points: List<PathPoint> = emptyList(),
-
-
-)
-
-data class PathPoint(
-    val latitude: Double,
-    val longitude: Double,
-    val altitude: Double,
-    val magnetic_x: Float, // Ensure this matches Firestore
-    val magnetic_y: Float, // Ensure this matches Firestore
-    val magnetic_z: Float, // Ensure this matches Firestore
-    val timestamp: Long
-)
